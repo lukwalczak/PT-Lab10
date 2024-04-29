@@ -7,6 +7,24 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
 
+        <DataGrid x:Name="carDataGrid" Grid.Column="0" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" ItemsSource="{Binding}" >
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Model" Binding="{Binding Model}" />
+                <DataGridTextColumn Header="Displacement" Binding="{Binding Engine.Displacement}" />
+                <DataGridTextColumn Header="HorsePower" Binding="{Binding Engine.HorsePower}" />
+                <DataGridTextColumn Header="Model" Binding="{Binding Engine.Model}" />
+                <DataGridTextColumn Header="Year" Binding="{Binding Year}" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Right">
+            <Button Content="Add Car" Click="AddCarButtonClick" Margin="5"/>
+            <Button Content="Remove Selected Car" Click="RemoveSelectedCarButtonClick" Margin="5"/>
+        </StackPanel>
     </Grid>
 </Window>

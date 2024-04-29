@@ -8,4 +8,13 @@
         <UseWPF>true</UseWPF>
     </PropertyGroup>
 
+    <ItemGroup>
+      <Compile Update="Car.cs">
+        <DependentUpon>MainWindow.xaml</DependentUpon>
+      </Compile>
+      <Compile Update="Engine.cs">
+        <DependentUpon>MainWindow.xaml</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
 </Project>

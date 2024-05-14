@@ -101,6 +101,27 @@ namespace PT_Lab10
                 }
             }
 
+            // zad3
+            var newcarList = new SortableBindingList<Car>(myCars);
+            newcarList.Sort(nameof(Car.Engine), ListSortDirection.Descending);
+
+            Console.WriteLine("Sorted by Engine Descending:");
+            foreach (var car in carList)
+            {
+                Console.WriteLine($"Model: {car.Model}, Displacement: {car.Engine.Displacement}, Engine Type: {car.Engine.Model}");
+            }
+
+            // Demonstrating search
+            string searchModel = "A6";
+            int index = newcarList.Find(nameof(Car.Model), searchModel);
+            if (index != -1)
+            {
+                Console.WriteLine($"\nFound car {searchModel} at position {index}");
+            }
+            else
+            {
+                Console.WriteLine($"\nCar {searchModel} not found");
+            }
         }
 
         private void AddCarButtonClick(object sender, RoutedEventArgs routedEventArgs)
@@ -172,95 +193,99 @@ namespace PT_Lab10
         }
     }
 
-    public class SortableBindingList<T> : BindingList<T>
+public class SortableBindingList<T> : BindingList<T>
+{
+    private bool isSorted;
+    private PropertyDescriptor sortProperty;
+    private ListSortDirection sortDirection;
+
+    public SortableBindingList(List<T> list) : base(list) { }
+
+    protected override bool SupportsSortingCore => true;
+
+    protected override bool IsSortedCore => isSorted;
+
+    protected override PropertyDescriptor SortPropertyCore => sortProperty;
+
+    protected override ListSortDirection SortDirectionCore => sortDirection;
+
+    protected override void ApplySortCore(PropertyDescriptor prop, ListSortDirection direction)
     {
-        private bool isSorted;
-        private ListSortDirection sortDirection = ListSortDirection.Ascending;
-        private PropertyDescriptor sortProperty;
-
-        protected override bool SupportsSortingCore => true;
-
-        protected override bool SupportsSearchingCore => true;
-
-        protected override void ApplySortCore(PropertyDescriptor prop, ListSortDirection direction)
+        if (prop.PropertyType.GetInterface(nameof(IComparable)) == null)
         {
-            List<T> itemsList = (List<T>)this.Items;
-
-            if (prop.PropertyType.GetInterface(nameof(IComparable)) != null)
-            {
-                var comparer = new PropertyComparer<T>(prop, direction);
-                itemsList.Sort(comparer);
-                isSorted = true;
-                sortProperty = prop;
-                sortDirection = direction;
-            }
-            else
-            {
-                throw new NotSupportedException("Cannot sort by this property.");
-            }
-
-            OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
+            throw new ArgumentException("Property does not implement IComparable");
         }
 
-        protected override void RemoveSortCore()
-        {
-            isSorted = false;
-            sortProperty = null;
-            sortDirection = ListSortDirection.Ascending;
-        }
+        List<T> items = Items as List<T>;
+        items.Sort(new PropertyComparer<T>(prop, direction));
 
-        protected override bool IsSortedCore => isSorted;
+        isSorted = true;
+        sortProperty = prop;
+        sortDirection = direction;
 
-        protected override ListSortDirection SortDirectionCore => sortDirection;
-
-        protected override PropertyDescriptor SortPropertyCore => sortProperty;
-
-        protected override int FindCore(PropertyDescriptor prop, object key)
-        {
-            if (prop == null) throw new ArgumentNullException(nameof(prop));
-            if (key == null) throw new ArgumentNullException(nameof(key));
-            if (!typeof(string).IsAssignableFrom(prop.PropertyType) && !typeof(int).IsAssignableFrom(prop.PropertyType))
-                throw new NotSupportedException("Searching is supported only for string and Int32 properties.");
-
-            var property = TypeDescriptor.GetProperties(typeof(T))[prop.Name];
-            for (int i = 0; i < Count; ++i)
-            {
-                T item = Items[i];
-                var value = property.GetValue(item);
-                if (value != null && value.Equals(key))
-                    return i;
-            }
-
-            return -1;
-        }
+        OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
     }
 
-    public class PropertyComparer<T> : IComparer<T>
+    protected override bool SupportsSearchingCore => true;
+
+    protected override int FindCore(PropertyDescriptor prop, object key)
     {
-        private readonly PropertyDescriptor property;
-        private readonly ListSortDirection direction;
-
-        public PropertyComparer(PropertyDescriptor property, ListSortDirection direction)
+        for (int i = 0; i < Count; i++)
         {
-            this.property = property;
-            this.direction = direction;
+            if (prop.GetValue(this[i]).Equals(key))
+            {
+                return i;
+            }
         }
+        return -1;
+    }
 
-        public int Compare(T x, T y)
+    public int Find(string propertyName, object key)
+    {
+        PropertyDescriptor prop = TypeDescriptor.GetProperties(typeof(T)).Find(propertyName, true);
+        if (prop == null)
         {
-            object xValue = property.GetValue(x);
-            object yValue = property.GetValue(y);
+            throw new ArgumentException("Invalid property name", propertyName);
+        }
+        return FindCore(prop, key);
+    }
 
-            if (xValue == null && yValue == null)
-                return 0;
-            if (xValue == null)
-                return direction == ListSortDirection.Ascending ? -1 : 1;
-            if (yValue == null)
-                return direction == ListSortDirection.Ascending ? 1 : -1;
+    public void Sort(string propertyName, ListSortDirection direction)
+    {
+        PropertyDescriptor prop = TypeDescriptor.GetProperties(typeof(T)).Find(propertyName, true);
+        if (prop == null)
+        {
+            throw new ArgumentException("Invalid property name", propertyName);
+        }
+        ApplySortCore(prop, direction);
+    }
+}
 
-            return direction == ListSortDirection.Ascending
-                ? ((IComparable)xValue).CompareTo(yValue)
-                : ((IComparable)yValue).CompareTo(xValue);
+public class PropertyComparer<T> : IComparer<T>
+{
+    private readonly PropertyDescriptor property;
+    private readonly ListSortDirection direction;
+
+    public PropertyComparer(PropertyDescriptor property, ListSortDirection direction)
+    {
+        this.property = property;
+        this.direction = direction;
+    }
+
+    public int Compare(T x, T y)
+    {
+        var xValue = property.GetValue(x) as IComparable;
+        var yValue = property.GetValue(y) as IComparable;
+
+        if (direction == ListSortDirection.Ascending)
+        {
+            return xValue.CompareTo(yValue);
+        }
+        else
+        {
+            return yValue.CompareTo(xValue);
         }
     }
+}
+
 }

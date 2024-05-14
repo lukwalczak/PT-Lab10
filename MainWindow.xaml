@@ -7,12 +7,21 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <DataGrid x:Name="carDataGrid" Grid.Column="0" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="True" Sorting="CarDataGrid_OnSorting" ItemsSource="{Binding}" >
+        <ToolBarTray Grid.Row="0">
+            <ToolBar>
+                <ComboBox x:Name="propertyComboBox" Width="120" />
+                <TextBox x:Name="searchTextBox" Width="120" />
+                <Button Content="Search" Click="SearchButtonClick" />
+            </ToolBar>
+        </ToolBarTray>
+
+        <DataGrid x:Name="carDataGrid" Grid.Row="1" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="True" ItemsSource="{Binding}">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Model" Binding="{Binding Model}" SortMemberPath="Model" />
                 <DataGridTextColumn Header="Displacement" Binding="{Binding Engine.Displacement}" SortMemberPath="Engine.Displacement" />
@@ -22,7 +31,7 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Right">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="2">
             <Button Content="Add Car" Click="AddCarButtonClick" Margin="5"/>
             <Button Content="Remove Selected Car" Click="RemoveSelectedCarButtonClick" Margin="5"/>
         </StackPanel>
